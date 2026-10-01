@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPPD - Kecamatan Sumowono</title>
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #e9e9e9;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #111;
+        font-size: 10pt;
+    }
+
+    .toolbar {
+        width: 210mm;
+        margin: 12px auto;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    button, a.btn-home {
+        border: 0;
+        border-radius: 4px;
+        padding: 9px 15px;
+        font-size: 14px;
+        cursor: pointer;
+        background: #1f2937;
+        color: #fff;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    button.btn-primary { background: #2563eb; }
+    button.btn-success { background: #16a34a; }
+    button.btn-danger { background: #dc2626; }
+    button.btn-warning { background: #d97706; }
+    button.btn-secondary, a.btn-home { background: #4b5563; }
+
+    button:hover, a.btn-home:hover { opacity: .9; }
+
+    .paper {
+        position: relative;
+        width: 210mm;
+        height: 297mm;
+        margin: 0 auto 12px;
+        padding: 9mm 9mm 7mm;
+        background: #fff;
+        box-shadow: 0 0 8px rgba(0,0,0,.18);
+    }
+
+    .sppd {
+        width: 100%;
+        height: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .sppd td {
+        border: 1.2px solid #111;
+        vertical-align: top;
+        padding: 1.5mm 2mm;
+        line-height: 1.15;
+    }
+
+    .left { width: 50%; }
+    .right { width: 50%; }
+
+    .r1 { height: 18.5%; }
+    .r2 { height: 19.5%; }
+    .r3 { height: 14.3%; }
+    .r4 { height: 14.3%; }
+    .r5 { height: 11.7%; }
+    .r6 { height: 16.0%; }
+    .r7 { height: 2.0%; }
+    .r8 { height: 6.9%; }
+    .r9 { height: 12.0%; }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 4mm 25mm 6mm 1fr;
+        align-items: baseline;
+        margin: 0 0 1mm 0; 
+    }
+
+    .form-row .roman { width: 8mm; }
+    .form-row .label { min-width: 0; }
+    .form-row .colon { width: 6mm; text-align: center; }
+    .form-row .editable { min-width: 10mm; display: inline-block; }
+
+    .label { display: inline-block; min-width: 30mm; }
+    .colon { display: inline-block; width: 6mm; text-align: center; }
+
+    .editable {
+        outline: none;
+        min-width: 10mm;
+        display: inline-block;
+    }
+
+    .editable:focus {
+        background: #fffbd1;
+        box-shadow: 0 0 0 1px #d1b000;
+    }
+
+    .signature {
+        margin-top: 5mm;
+        text-align: center;
+    }
+
+    .signature .name {
+        margin-top: 13mm;
+        text-decoration: underline;
+        font-weight: normal;
+    }
+
+    .signature .nip { margin-top: 1mm; }
+    .inspection { line-height: 1.25; text-align: left; }
+    .catatan { padding: 0 2mm !important; vertical-align: middle !important; }
+
+    .perhatian {
+        line-height: 1.3;
+        padding-top: 1mm !important;
+        padding-bottom: 1mm !important;
+    }
+
+    .perhatian-title { display: block; margin-bottom: 1mm; }
+    .perhatian-text { margin-left: 8mm; margin-right: 3mm; }
+
+    .ppk {
+        text-align: center;
+        vertical-align: top !important;
+    }
+
+    .ppk-title { margin-top: 1mm; margin-left: 40mm; }
+    .ppk-sign { margin-top: 11mm; margin-left: 40mm; }
+    .ppk-name { margin-top: 8mm; text-decoration: underline; }
+
+    /* Styles Tanda Tangan Movable & Resizable */
+    .movable-signature {
+        position: absolute;
+        top: 100mm;
+        left: 20mm;
+        width: 260px;
+        text-align: center;
+        cursor: move;
+        border: 1px dashed #2563eb;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.95);
+        user-select: none;
+        z-index: 10;
+        font-size: 13px;
+    }
+
+    .movable-signature.selected {
+        border: 2px solid #2563eb;
+        box-shadow: 0 0 6px rgba(37, 99, 235, 0.4);
+    }
+
+    .movable-signature .editable-field {
+        outline: none;
+        cursor: text;
+        line-height: 1.25;
+    }
+
+    .movable-signature .editable-field:focus { background: #fffbd1; }
+    .movable-signature .sig-title { font-size: 1em; margin-bottom: 1.4em; }
+    .movable-signature .sig-name { font-weight: bold; text-decoration: underline; font-size: 1em; }
+    .movable-signature .sig-rank { font-size: 0.95em; }
+    .movable-signature .sig-nip { font-size: 0.95em; }
+
+    .resize-handle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #2563eb;
+        right: -5px;
+        bottom: -5px;
+        cursor: se-resize;
+        display: none;
+    }
+
+    .movable-signature.selected .resize-handle { display: block; }
+
+    /* Modal / Pop-up Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+    }
+
+    .modal {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        width: 680px;
+        max-width: 95%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .modal h3 { margin-top: 0; font-size: 18px; color: #111; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 13px; }
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+
+    .search-box {
+        position: relative;
+        margin-bottom: 12px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #2563eb;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .search-box input:focus {
+        box-shadow: 0 0 4px rgba(37, 99, 235, 0.4);
+    }
+
+    .db-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .db-table th, .db-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+        font-size: 12px;
+    }
+
+    .db-table th { background: #f3f4f6; }
+
+    .actions-cell {
+        display: flex;
+        gap: 4px;
+    }
+
+    .actions-cell button {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .backup-restore-bar {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 15px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    @media print {
+        html, body { background: #fff; }
+        .toolbar, .modal-overlay { display: none !important; }
+
+        .paper {
+            margin: 0;
+            width: 210mm;
+            height: 297mm;
+            padding: 9mm 9mm 7mm;
+            box-shadow: none;
+        }
+
+        .editable:focus, .movable-signature .editable-field:focus {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .movable-signature {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        .resize-handle { display: none !important; }
+
+        body.print-content-only .sppd td { border-color: transparent !important; }
+        body.print-content-only .sppd .roman,
+        body.print-content-only .sppd .label,
+        body.print-content-only .sppd .colon,
+        body.print-content-only .sppd .signature,
+        body.print-content-only .sppd .inspection,
+        body.print-content-only .sppd .catatan,
+        body.print-content-only .sppd .perhatian,
+        body.print-content-only .sppd .ppk {
+            visibility: hidden !important;
+        }
+
+        body.print-content-only .sppd .editable { visibility: visible !important; }
+        body.print-content-only .sppd .editable.no-print-content { visibility: hidden !important; }
+        body.print-content-only .movable-signature { visibility: visible !important; }
+    }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+    <a href="index.html" class="btn-home" style="margin-right: auto;">🏠 Home</a>
+    <button class="btn-success" onclick="openDatabaseModal()">🗂 Kelola Database Pejabat</button>
+    <button onclick="openSelectPejabatModal()">+ Tambah TTD Pejabat</button>
+    <button onclick="deleteSelectedSignature()">Hapus TTD Terpilih</button>
+    <button onclick="clearFields()">Bersihkan Isian</button>
+    <button onclick="window.print()">🖨 Cetak Dokumen Lengkap</button>
+    <button class="btn-primary" onclick="printContentOnly()">🖨 Cetak Isian & TTD Saja</button>
+</div>
+
+<div class="paper" id="paper">
+<table class="sppd">
+    <tr class="r1">
+        <td class="left"></td>
+        <td class="right">
+            <div class="form-row">
+                <span class="roman">I.</span><span class="label">Berangkat dari</span><span class="colon">:</span><span class="editable no-print-content" contenteditable="true">Kecamatan Sumowono</span>
+            </div>
+            <div class="form-row">
+                <span class="roman"></span><span class="label">Ke</span><span class="colon">:</span><span class="editable" contenteditable="true"></span>
+            </div>
+            <div class="form-row">
+                <span class="roman"></span><span class="label" style="margin-top: 3mm;">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span>
+            </div>
+
+            <div class="signature" style="text-align:left; margin-top:5mm; margin-left:4mm;">
+                <div>CAMAT SUMOWONO</div>
+                <div class="name" style="margin-top:15mm; text-decoration:none;">AGUNG HERU SURYONO, S.H.</div>
+                <div class="nip">NIP. 198506272010011017</div>
+            </div>
+        </td>
+    </tr>
+
+    <tr class="r2">
+        <td>
+            <div class="form-row"><span class="roman">II.</span><span class="label">Tiba di</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+        <td>
+            <div class="form-row"><span class="roman"></span><span class="label">Berangkat dari</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Ke</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+    </tr>
+
+    <tr class="r3">
+        <td>
+            <div class="form-row"><span class="roman">III.</span><span class="label">Tiba di</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+        <td>
+            <div class="form-row"><span class="roman"></span><span class="label">Berangkat dari</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Ke</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+    </tr>
+
+    <tr class="r4">
+        <td>
+            <div class="form-row"><span class="roman">IV.</span><span class="label">Tiba di</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+        <td>
+            <div class="form-row"><span class="roman"></span><span class="label">Berangkat dari</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Ke</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+    </tr>
+
+    <tr class="r5">
+        <td>
+            <div class="form-row"><span class="roman">V.</span><span class="label">Tiba di</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+        <td>
+            <div class="form-row"><span class="roman"></span><span class="label">Berangkat dari</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Ke</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+        </td>
+    </tr>
+
+    <tr class="r6">
+        <td>
+            <div class="form-row"><span class="roman">VI.</span><span class="label">Tiba di</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+            <div class="form-row"><span class="roman"></span><span class="label">Pada tanggal</span><span class="colon">:</span><span class="editable" contenteditable="true"></span></div>
+
+            <div class="signature">
+                <div>CAMAT SUMOWONO</div>
+                <div class="name">AGUNG HERU SURYONO, S.H.</div>
+                <div class="nip">NIP. 198506272010011017</div>
+            </div>
+        </td>
+        <td class="inspection">
+            Telah diperiksa, dengan keterangan bahwa perjalanan<br>
+            tersebut diatas benar dilakukan atas perintahnya dan<br>
+            semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.<br>
+        </td>
+    </tr>
+
+    <tr class="r7">
+        <td colspan="2" class="catatan">VII. CATATAN LAIN-LAIN :</td>
+    </tr>
+
+    <tr class="r8">
+        <td colspan="2" class="perhatian">
+            <span class="perhatian-title">VIII. PERHATIAN :</span>
+            <div class="perhatian-text">
+                PPK yang berwenang menerbitkan SPPD, pegawai yang melakukan perjalanan dinas,
+                para pejabat yang mengesahkan tanggal berangkat/tiba serta Bendahara bertanggung
+                jawab berdasarkan peraturan-peraturan Keuangan Negara apabila Negara mendapat rugi
+                akibat kesalahan, kealpaannya.
+            </div>
+        </td>
+    </tr>
+
+    <tr class="r9">
+        <td colspan="2" class="ppk">
+            <div class="ppk-title">Pejabat Pembuat Komitmen</div>
+            <div class="ppk-sign">
+                <div class="ppk-name">AGUNG HERU SURYONO, S.H.</div>
+                <div>NIP. 198506272010011017</div>
+            </div>
+        </td>
+    </tr>
+</table>
+</div>
+
+<!-- MODAL KELOLA DATABASE -->
+<div class="modal-overlay" id="dbModal">
+    <div class="modal">
+        <h3>🗂 Kelola Database Pejabat (Firestore)</h3>
+        
+        <!-- Backup & Restore Controls -->
+        <div class="backup-restore-bar">
+            <div>
+                <strong>Backup & Restore DB:</strong>
+                <span style="font-size:11px; color:#666; display:block;">Simpan ke JSON atau pulihkan data dari file JSON.</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-warning" onclick="backupDatabase()">💾 Backup DB</button>
+                <button type="button" class="btn-primary" onclick="document.getElementById('restoreFileInput').click()">📥 Restore DB</button>
+                <input type="file" id="restoreFileInput" accept=".json" style="display:none" onchange="restoreDatabase(event)">
+            </div>
+        </div>
+
+        <form id="pejabatForm" onsubmit="savePejabat(event)">
+            <input type="hidden" id="pejabatId">
+            <div class="form-group">
+                <label>Nama Instansi / Dinas:</label>
+                <input type="text" id="inputInstansi" placeholder="Contoh: Badan Keuangan Daerah Kabupaten Semarang" required>
+            </div>
+            <div class="form-group">
+                <label>Jabatan (Gunakan Enter untuk baris baru):</label>
+                <textarea id="inputTitle" rows="2" placeholder="Contoh: Kasub Bidang Evaluasi Pendapatan" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Nama Pejabat:</label>
+                <input type="text" id="inputName" required>
+            </div>
+            <div class="form-group">
+                <label>Pangkat / Golongan:</label>
+                <input type="text" id="inputRank">
+            </div>
+            <div class="form-group">
+                <label>NIP:</label>
+                <input type="text" id="inputNip">
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button type="submit" class="btn-primary" id="btnSaveForm">Simpan Pejabat</button>
+                <button type="button" class="btn-secondary" onclick="resetForm()">Batal Edit</button>
+            </div>
+        </form>
+
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+
+        <h4>Daftar Pejabat Tersimpan</h4>
+        <div class="search-box">
+            <input type="text" id="dbSearchInput" oninput="renderDatabaseTable()" placeholder="🔍 Cari nama pejabat, jabatan, atau instansi...">
+        </div>
+        <table class="db-table">
+            <thead>
+                <tr>
+                    <th>Instansi</th>
+                    <th>Jabatan</th>
+                    <th>Nama & NIP</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="pejabatTableBody">
+                <!-- Data diisi oleh JS -->
+            </tbody>
+        </table>
+
+        <div style="text-align:right; margin-top:20px;">
+            <button class="btn-secondary" onclick="closeDatabaseModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PILIH PEJABAT -->
+<div class="modal-overlay" id="selectModal">
+    <div class="modal">
+        <h3>Pilih Pejabat untuk Ditambahkan</h3>
+        <div class="search-box">
+            <input type="text" id="selectSearchInput" oninput="renderSelectPejabatTable()" placeholder="🔍 Cari pejabat berdasarkan nama, jabatan, atau instansi...">
+        </div>
+        <table class="db-table">
+            <thead>
+                <tr>
+                    <th>Instansi & Jabatan</th>
+                    <th>Nama Pejabat</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="selectPejabatTableBody">
+                <!-- Data diisi oleh JS -->
+            </tbody>
+        </table>
+        <div style="text-align:right; margin-top:20px;">
+            <button class="btn-secondary" onclick="closeSelectPejabatModal()">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- FIREBASE SDK & APP LOGIC -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+    getFirestore, collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, writeBatch 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// --- KONFIGURASI FIREBASE ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAZu8jGmIa8sMO1TbtpivfdFcRAshH9Xus",
+    authDomain: "sppd-kecamatan.firebaseapp.com",
+    projectId: "sppd-kecamatan",
+    storageBucket: "sppd-kecamatan.firebasestorage.app",
+    messagingSenderId: "87536518263",
+    appId: "1:87536518263:web:80f4d80ae3e1b43f4f3272"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const pejabatCol = collection(db, "pejabat");
+
+let selectedSig = null;
+let pejabatCache = [];
+
+// --- FIRESTORE CRUD LOGIC ---
+async function fetchPejabatData() {
+    try {
+        const snapshot = await getDocs(pejabatCol);
+        pejabatCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return pejabatCache;
+    } catch (err) {
+        console.error("Gagal mengambil data dari Firestore:", err);
+        return [];
+    }
+}
+
+window.savePejabat = async function(e) {
+    e.preventDefault();
+    const id = document.getElementById("pejabatId").value;
+    const instansi = document.getElementById("inputInstansi").value;
+    const title = document.getElementById("inputTitle").value;
+    const name = document.getElementById("inputName").value;
+    const rank = document.getElementById("inputRank").value;
+    const nip = document.getElementById("inputNip").value;
+
+    const data = { instansi, title, name, rank, nip };
+
+    try {
+        if (id) {
+            await updateDoc(doc(db, "pejabat", id), data);
+        } else {
+            await addDoc(pejabatCol, data);
+        }
+        resetForm();
+        await fetchPejabatData();
+        renderDatabaseTable();
+    } catch (err) {
+        alert("Gagal menyimpan data ke Firestore: " + err.message);
+    }
+};
+
+window.deletePejabatFromDB = async function(id) {
+    if (confirm("Hapus data pejabat ini dari database Firestore?")) {
+        try {
+            await deleteDoc(doc(db, "pejabat", id));
+            await fetchPejabatData();
+            renderDatabaseTable();
+        } catch (err) {
+            alert("Gagal menghapus data: " + err.message);
+        }
+    }
+};
+
+window.editPejabat = function(id) {
+    const data = pejabatCache.find(p => p.id === id);
+    if (data) {
+        document.getElementById("pejabatId").value = data.id;
+        document.getElementById("inputInstansi").value = data.instansi || '';
+        document.getElementById("inputTitle").value = data.title || '';
+        document.getElementById("inputName").value = data.name || '';
+        document.getElementById("inputRank").value = data.rank || '';
+        document.getElementById("inputNip").value = data.nip || '';
+        document.getElementById("btnSaveForm").textContent = "Update Pejabat";
+    }
+};
+
+window.resetForm = function() {
+    document.getElementById("pejabatId").value = "";
+    document.getElementById("pejabatForm").reset();
+    document.getElementById("btnSaveForm").textContent = "Simpan Pejabat";
+};
+
+window.renderDatabaseTable = function() {
+    const keyword = document.getElementById("dbSearchInput").value.toLowerCase();
+    const tbody = document.getElementById("pejabatTableBody");
+    tbody.innerHTML = "";
+
+    const filteredList = pejabatCache.filter(p => 
+        (p.name && p.name.toLowerCase().includes(keyword)) ||
+        (p.title && p.title.toLowerCase().includes(keyword)) ||
+        (p.instansi && p.instansi.toLowerCase().includes(keyword))
+    );
+
+    if (filteredList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Data tidak ditemukan.</td></tr>`;
+        return;
+    }
+
+    filteredList.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><b>${p.instansi || '-'}</b></td>
+            <td>${(p.title || '').replace(/\n/g, '<br>')}</td>
+            <td><b>${p.name || ''}</b><br><small>${p.rank || ''}</small><br><small>${p.nip || '-'}</small></td>
+            <td>
+                <div class="actions-cell">
+                    <button class="btn-primary" onclick="editPejabat('${p.id}')">Edit</button>
+                    <button class="btn-danger" onclick="deletePejabatFromDB('${p.id}')">Hapus</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+};
+
+// --- BACKUP & RESTORE LOGIC ---
+window.backupDatabase = function() {
+    if (pejabatCache.length === 0) {
+        alert("Database kosong, tidak ada data untuk di-backup.");
+        return;
+    }
+
+    const exportData = pejabatCache.map(({ id, ...rest }) => rest);
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `backup_pejabat_sppd_${new Date().toISOString().slice(0,10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+};
+
+window.restoreDatabase = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+        try {
+            const importedData = JSON.parse(event.target.result);
+            if (!Array.isArray(importedData)) {
+                throw new Error("Format JSON harus berupa array data pejabat.");
+            }
+
+            if (confirm(`Apakah Anda yakin ingin mengimpor ${importedData.length} data pejabat ke Firestore?`)) {
+                const batch = writeBatch(db);
+                importedData.forEach(item => {
+                    const newRef = doc(pejabatCol);
+                    batch.set(newRef, {
+                        instansi: item.instansi || "",
+                        title: item.title || "",
+                        name: item.name || "",
+                        rank: item.rank || "",
+                        nip: item.nip || ""
+                    });
+                });
+
+                await batch.commit();
+                alert("Restorasi data ke Firestore berhasil!");
+                await fetchPejabatData();
+                renderDatabaseTable();
+            }
+        } catch (err) {
+            alert("Gagal merestore database: " + err.message);
+        }
+        e.target.value = ""; 
+    };
+    reader.readAsText(file);
+};
+
+// --- MODAL MANAGEMENT ---
+window.openDatabaseModal = async function() {
+    document.getElementById("dbSearchInput").value = "";
+    await fetchPejabatData();
+    renderDatabaseTable();
+    document.getElementById("dbModal").style.display = "flex";
+};
+
+window.closeDatabaseModal = function() {
+    document.getElementById("dbModal").style.display = "none";
+    resetForm();
+};
+
+window.openSelectPejabatModal = async function() {
+    document.getElementById("selectSearchInput").value = "";
+    await fetchPejabatData();
+    renderSelectPejabatTable();
+    document.getElementById("selectModal").style.display = "flex";
+};
+
+window.renderSelectPejabatTable = function() {
+    const keyword = document.getElementById("selectSearchInput").value.toLowerCase();
+    const tbody = document.getElementById("selectPejabatTableBody");
+    tbody.innerHTML = "";
+
+    const filteredList = pejabatCache.filter(p => 
+        (p.name && p.name.toLowerCase().includes(keyword)) ||
+        (p.title && p.title.toLowerCase().includes(keyword)) ||
+        (p.instansi && p.instansi.toLowerCase().includes(keyword))
+    );
+
+    if (filteredList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Data tidak ditemukan. Silakan tambahkan pejabat melalui 'Kelola Database'.</td></tr>`;
+    } else {
+        filteredList.forEach(p => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>
+                    <b>${p.instansi || '-'}</b><br>
+                    <small>${(p.title || '').replace(/\n/g, '<br>')}</small>
+                </td>
+                <td><b>${p.name}</b><br><small>${p.nip || ''}</small></td>
+                <td><button class="btn-success" onclick="selectPejabatToAdd('${p.id}')">Gunakan</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+};
+
+window.closeSelectPejabatModal = function() {
+    document.getElementById("selectModal").style.display = "none";
+};
+
+window.selectPejabatToAdd = function(id) {
+    const data = pejabatCache.find(p => p.id === id);
+    if (data) {
+        addMovableSignature(data);
+        closeSelectPejabatModal();
+    }
+};
+
+// --- DRAG & DROP MOVABLE SIGNATURE LOGIC ---
+function setupMovableAndResizable(element) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const resizeHandle = element.querySelector('.resize-handle');
+    const baseWidth = 260; 
+    const baseFontSize = 13; 
+
+    element.onmousedown = function(e) {
+        if (e.target.isContentEditable || e.target === resizeHandle) return;
+        e.preventDefault();
+        selectSignature(element);
+
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    };
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+
+    if (resizeHandle) {
+        resizeHandle.onmousedown = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            selectSignature(element);
+
+            let startWidth = element.offsetWidth;
+            let startX = e.clientX;
+
+            function doResize(e) {
+                let newWidth = startWidth + (e.clientX - startX);
+                if (newWidth > 120 && newWidth < 600) {
+                    element.style.width = newWidth + 'px';
+                    let scale = newWidth / baseWidth;
+                    element.style.fontSize = (baseFontSize * scale) + 'px';
+                }
+            }
+
+            function stopResize() {
+                document.removeEventListener('mousemove', doResize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+
+            document.addEventListener('mousemove', doResize);
+            document.addEventListener('mouseup', stopResize);
+        };
+    }
+}
+
+function selectSignature(element) {
+    document.querySelectorAll('.movable-signature').forEach(el => el.classList.remove('selected'));
+    if (element) {
+        element.classList.add('selected');
+        selectedSig = element;
+    } else {
+        selectedSig = null;
+    }
+}
+
+function addMovableSignature(data) {
+    const paper = document.getElementById('paper');
+    const newSig = document.createElement('div');
+    newSig.className = 'movable-signature';
+    newSig.style.top = '100mm';
+    newSig.style.left = '20mm';
+
+    let titleText = "";
+    if (data) {
+        titleText = `${data.title}<br>${data.instansi}`;
+    } else {
+        titleText = "Jabatan Pejabat<br>Nama Instansi";
+    }
+
+    const titleHTML = titleText.replace(/\n/g, '<br>');
+    const nameHTML = data ? data.name : "NAMA PEJABAT, S.H.";
+    const rankHTML = data ? (data.rank || "") : "Pangkat / Golongan";
+    const nipHTML = data ? (data.nip || "") : "NIP. 00000000 000000 0 000";
+
+    newSig.innerHTML = `
+        <div class="sig-title editable-field" contenteditable="true">${titleHTML}</div>
+        <div class="sig-name editable-field" contenteditable="true">${nameHTML}</div>
+        <div class="sig-rank editable-field" contenteditable="true">${rankHTML}</div>
+        <div class="sig-nip editable-field" contenteditable="true">${nipHTML}</div>
+        <div class="resize-handle"></div>
+    `;
+    paper.appendChild(newSig);
+    setupMovableAndResizable(newSig);
+    selectSignature(newSig);
+}
+
+window.deleteSelectedSignature = function() {
+    if (selectedSig) {
+        selectedSig.remove();
+        selectedSig = null;
+    } else {
+        alert("Pilih tanda tangan yang ingin dihapus dengan mengkliknya terlebih dahulu.");
+    }
+};
+
+window.clearFields = function() {
+    if (confirm("Bersihkan seluruh isian yang dapat diedit?")) {
+        document.querySelectorAll('.sppd [contenteditable="true"]').forEach(el => {
+            if (el.textContent.trim() !== "Kecamatan Sumowono") el.textContent = "";
+        });
+    }
+};
+
+window.printContentOnly = function() {
+    document.body.classList.add('print-content-only');
+    window.print();
+};
+
+window.addEventListener('afterprint', () => {
+    document.body.classList.remove('print-content-only');
+});
+
+document.getElementById('paper').addEventListener('click', function(e) {
+    if (!e.target.closest('.movable-signature')) {
+        selectSignature(null);
+    }
+});
+
+// Load awal
+fetchPejabatData();
+</script>
+
+</body>
+</html>
